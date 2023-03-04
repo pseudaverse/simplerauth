@@ -15,6 +15,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Position;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
@@ -90,7 +91,12 @@ public class OnPlayerConnect {
             if (player.getX() > -1 && player.getX() < 1 && player.getZ() > -1 && player.getZ() < 1 && player.getY() < 1)
                 return;
             DbManager.savePosition(player.getEntityName(), player.getPos());
-            player.requestTeleport(0, 0, 0);
+            if (ConfigManager.getBoolean("login-spawn")) {
+                Position pos = ConfigManager.getPosition("spawn-position");
+                player.requestTeleport(pos.getX(), pos.getY(), pos.getZ());
+            } else {
+                player.requestTeleport(0, 0, 0);
+            }
         } else if (ConfigManager.getBoolean("portal-teleport")) { // Not needed when player is in the void
             if (player.getWorld().getBlockState(player.getBlockPos()).isOf(Blocks.NETHER_PORTAL)) {
                 teleportPlayerAway(player);
@@ -104,7 +110,7 @@ public class OnPlayerConnect {
         ServerWorld world = player.getWorld();
         while (!teleported) {
             double x = player.getX() + (player.getRandom().nextDouble() - 0.5D) * 16.0D;
-            double y = MathHelper.clamp(player.getY() + (double)(player.getRandom().nextInt(16) - 8), world.getBottomY(), world.getBottomY() + world.getLogicalHeight() - 1);
+            double y = MathHelper.clamp(player.getY() + (double) (player.getRandom().nextInt(16) - 8), world.getBottomY(), world.getBottomY() + world.getLogicalHeight() - 1);
             double z = player.getZ() + (player.getRandom().nextDouble() - 0.5D) * 16.0D;
 
             if (player.teleport(x, y, z, true)) {

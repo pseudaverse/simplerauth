@@ -7,12 +7,17 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.util.math.Position;
+import net.minecraft.util.math.Vec3d;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class ConfigManager {
     public static final int VERSION = 7;
@@ -37,6 +42,8 @@ public class ConfigManager {
             db.addProperty("require-auth-permission-level", 0);
             db.addProperty("prevent-logging-another-location", true);
             db.addProperty("hide-position", false);
+            db.addProperty("login-spawn", false);
+            db.addProperty("spawn-position", "0 0 0");
             db.addProperty("portal-teleport", true);
             db.addProperty("optional-2fa", true);
             db.add("forced-offline-users", new JsonArray());
@@ -114,6 +121,20 @@ public class ConfigManager {
         }
         db.addProperty(key, value);
         saveDatabase();
+    }
+
+    public static Position getPosition(String key) {
+        if (!DBFILE.exists()) {
+            AuthMod.LOGGER.warn("getPosition was called but config file doesn't exist!");
+            return Vec3d.ZERO;
+        }
+        String rawPosition = db.get(key).getAsString();
+        List<Double> coordinates = Arrays.stream(rawPosition.split(" ")).map(Double::parseDouble).toList();
+        if (coordinates.size() != 3) {
+            AuthMod.LOGGER.warn("not enough coordinates, needed 3");
+            return Vec3d.ZERO;
+        }
+        return new Vec3d(coordinates.get(0), coordinates.get(1), coordinates.get(2));
     }
 
     public static String getAuthType() {
